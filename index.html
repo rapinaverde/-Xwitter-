@@ -7,12 +7,13 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- Página de Login -->
-  <div id="loginPage" class="login-page">
-    <h2>Login no Xwitter</h2>
+  <!-- Página de Login/Cadastro -->
+  <div id="authPage" class="login-page">
+    <h2 id="authTitle">Login no Xwitter</h2>
     <input type="text" id="usernameInput" placeholder="Nome de usuário">
     <input type="file" id="profilePicInput" accept="image/*">
-    <button id="loginBtn">Entrar</button>
+    <button id="authBtn">Entrar</button>
+    <button id="switchToSignupBtn">Cadastrar-se</button>
   </div>
 
   <!-- Página Principal -->
@@ -27,6 +28,7 @@
       <input type="file" id="profilePicUpdate" accept="image/*">
       <input type="text" id="customName" placeholder="Seu nome">
       <button id="saveProfile">Salvar</button>
+      <button id="logoutBtn">Sair</button> <!-- Botão de logout -->
     </div>
 
     <!-- Conteúdo Principal -->
@@ -49,9 +51,9 @@
 
   <!-- Script JS -->
   <script>
-    const loginPage = document.getElementById("loginPage");
+    const authPage = document.getElementById("authPage");
     const app = document.getElementById("app");
-    const loginBtn = document.getElementById("loginBtn");
+    const loginBtn = document.getElementById("authBtn");
     const usernameInput = document.getElementById("usernameInput");
     const profilePicInput = document.getElementById("profilePicInput");
     const profilePic = document.getElementById("profilePic");
@@ -65,11 +67,14 @@
     const newChannelName = document.getElementById("newChannelName");
     const addChannelBtn = document.getElementById("addChannelBtn");
     const channelTitle = document.getElementById("channelTitle");
+    const switchToSignupBtn = document.getElementById("switchToSignupBtn");
+    const logoutBtn = document.getElementById("logoutBtn"); // Botão de logout
 
     let currentUser = "";
     let currentPic = "";
     let currentChannel = "geral";
-    const tweetsByChannel = { geral: [] };
+    const tweetsByChannel = JSON.parse(localStorage.getItem("tweetsByChannel")) || { geral: [] };
+    const savedChannels = JSON.parse(localStorage.getItem("channels")) || ["geral"];
 
     // Função para renderizar os posts do feed
     function renderFeed() {
@@ -83,21 +88,64 @@
       const username = usernameInput.value.trim();
       const file = profilePicInput.files[0];
       if (username) {
-        currentUser = username;
-        localStorage.setItem("twiscord_user", username);
-        customName.value = username;
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = function(e) {
-            currentPic = e.target.result;
-            localStorage.setItem("twiscord_pic", currentPic);
-            profilePic.src = currentPic;
-          };
-          reader.readAsDataURL(file);
+        if (localStorage.getItem(username)) { // Verifica se o usuário já existe
+          currentUser = username;
+          localStorage.setItem("twiscord_user", username);
+          customName.value = username;
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+              currentPic = e.target.result;
+              localStorage.setItem("twiscord_pic", currentPic);
+              profilePic.src = currentPic;
+            };
+            reader.readAsDataURL(file);
+          }
+          app.style.display = "flex";
+          authPage.style.display = "none";
+        } else {
+          alert("Usuário não encontrado. Tente cadastrar-se.");
         }
-        app.style.display = "flex";
-        loginPage.style.display = "none";
       }
+    });
+
+    // Função para o Cadastro de novos usuários
+    switchToSignupBtn.addEventListener("click", () => {
+      authPage.innerHTML = `
+        <h2>Cadastrar no Xwitter</h2>
+        <input type="text" id="newUsername" placeholder="Nome de usuário">
+        <input type="file" id="newProfilePic" accept="image/*">
+        <button id="signupBtn">Cadastrar</button>
+        <button id="switchToLoginBtn">Já tenho uma conta</button>
+      `;
+      const signupBtn = document.getElementById("signupBtn");
+      const newUsernameInput = document.getElementById("newUsername");
+      const newProfilePicInput = document.getElementById("newProfilePic");
+
+      signupBtn.addEventListener("click", () => {
+        const newUsername = newUsernameInput.value.trim();
+        const newFile = newProfilePicInput.files[0];
+        if (newUsername && !localStorage.getItem(newUsername)) {  // Verifica se o usuário já não existe
+          let newUserPic = "";
+          if (newFile) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+              newUserPic = e.target.result;
+              localStorage.setItem(newUsername, JSON.stringify({ pic: newUserPic, posts: [] }));
+            };
+            reader.readAsDataURL(newFile);
+          } else {
+            localStorage.setItem(newUsername, JSON.stringify({ pic: "", posts: [] }));
+          }
+          alert("Cadastro realizado com sucesso! Agora, faça login.");
+          location.reload();  // Recarrega a página para mostrar o botão de login
+        } else {
+          alert("Nome de usuário inválido ou já existe!");
+        }
+      });
+
+      const switchToLoginBtn = document.getElementById("switchToLoginBtn");
+      switchToLoginBtn.addEventListener("click", () => location.reload());
     });
 
     // Função para salvar o nome personalizado no perfil
@@ -144,6 +192,9 @@
       if (!tweetsByChannel[currentChannel]) tweetsByChannel[currentChannel] = [];
       tweetsByChannel[currentChannel].unshift(post);
 
+      // Salva os posts no localStorage
+      localStorage.setItem("tweetsByChannel", JSON.stringify(tweetsByChannel));
+
       renderFeed();
       tweetBox.value = "";
     });
@@ -156,18 +207,34 @@
         currentUser = savedUser;
         currentPic = savedPic || "";
         app.style.display = "flex";
-        loginPage.style.display = "none";
+        authPage.style.display = "none";
         customName.value = savedUser;
         if (savedPic) profilePic.src = savedPic;
       }
+
+      // Carregar canais salvos
+      savedChannels.forEach(channel => {
+        const li = document.createElement("li");
+        li.textContent = "# " + channel;
+        li.classList.add("channel-item");
+        li.addEventListener("click", () => {
+          currentChannel = channel;
+          renderFeed();
+        });
+        channelList.appendChild(li);
+      });
+
       renderFeed();
     };
 
     // Adicionar um novo canal de grupo
     addChannelBtn.addEventListener("click", () => {
       const name = newChannelName.value.trim();
-      if (name && !tweetsByChannel[name]) {
-        tweetsByChannel[name] = [];
+      if (name && !savedChannels.includes(name)) {
+        savedChannels.push(name);
+        localStorage.setItem("channels", JSON.stringify(savedChannels));
+
+        // Cria a lista de canais
         const li = document.createElement("li");
         li.textContent = "# " + name;
         li.classList.add("channel-item");
@@ -176,8 +243,18 @@
           renderFeed();
         });
         channelList.appendChild(li);
+
         newChannelName.value = "";
       }
+    });
+
+    // Função de Logout
+    logoutBtn.addEventListener("click", () => {
+      localStorage.removeItem("twiscord_user");
+      localStorage.removeItem("twiscord_pic");
+      localStorage.removeItem("tweetsByChannel");
+      localStorage.removeItem("channels");
+      location.reload(); // Recarrega a página e volta para a tela de login
     });
   </script>
 
@@ -301,13 +378,6 @@
     }
     ul#channelList li.channel-item:hover {
       background-color: #1d2630;
-    }
-    .groups-panel {
-      width: 240px;
-      padding: 20px;
-      background-color: #161b22;
-      height: 100vh;
-      overflow-x: auto;
     }
   </style>
 </body>
