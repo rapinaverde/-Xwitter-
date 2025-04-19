@@ -1,10 +1,14 @@
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   font-family: Arial, sans-serif;
   background-color: #0d1117;
   color: white;
 }
+
 .login-page {
   display: flex;
   flex-direction: column;
@@ -13,24 +17,30 @@ body {
   height: 100vh;
   background: #161b22;
 }
+
 .login-page input, .login-page button {
   padding: 10px;
   margin: 10px;
   border-radius: 5px;
   border: none;
 }
+
 .login-page input {
   width: 200px;
 }
+
 .login-page button {
   background: #1d9bf0;
   color: white;
   cursor: pointer;
 }
+
 #app {
   display: flex;
   width: 100%;
+  flex-direction: row;
 }
+
 .sidebar {
   width: 240px;
   padding: 20px;
@@ -49,10 +59,12 @@ body {
   height: 100vh;
   overflow-y: auto;
 }
+
 .main {
   flex-grow: 1;
   padding: 20px;
 }
+
 textarea {
   width: 80%;
   height: 60px;
@@ -64,6 +76,7 @@ textarea {
   border-radius: 5px;
   padding: 10px;
 }
+
 button {
   padding: 10px 20px;
   background-color: #1d9bf0;
@@ -73,30 +86,35 @@ button {
   border-radius: 5px;
   margin-bottom: 10px;
 }
+
 .post {
   background: #161b22;
   padding: 10px;
   margin-bottom: 10px;
   border-radius: 8px;
 }
+
 .post-header {
   display: flex;
   align-items: center;
   gap: 10px;
   margin-bottom: 5px;
 }
+
 .avatar {
   width: 80px;
   height: 80px;
   border-radius: 50%;
   object-fit: cover;
 }
+
 .avatar-small {
   width: 40px;
   height: 40px;
   border-radius: 50%;
   object-fit: cover;
 }
+
 input[type="text"], input[type="file"] {
   width: 100%;
   margin-top: 10px;
@@ -104,9 +122,11 @@ input[type="text"], input[type="file"] {
   border-radius: 5px;
   border: none;
 }
+
 ul#channelList {
   padding: 0;
 }
+
 ul#channelList li.channel-item {
   list-style: none;
   margin: 5px 0;
@@ -115,6 +135,105 @@ ul#channelList li.channel-item {
   border-radius: 5px;
   transition: background 0.2s;
 }
+
 ul#channelList li.channel-item:hover {
   background-color: #1d2630;
+}
+
+/* Media Query para dispositivos móveis */
+@media (max-width: 768px) {
+  #app {
+    flex-direction: column;
+  }
+
+  .sidebar, .sidebarR {
+    width: 100%;
+    height: auto;
+    position: static;
+    padding: 10px;
+    box-sizing: border-box;
+  }
+
+  .main {
+    width: 100%;
+    padding: 10px;
+  }
+
+  textarea {
+    width: 100%;
+  }
+
+  button {
+    width: 100%;
+    padding: 15px;
+  }
+
+  .post {
+    padding: 15px;
+  }
+
+  .avatar {
+    width: 60px;
+    height: 60px;
+  }
+
+  .avatar-small {
+    width: 30px;
+    height: 30px;
+  }
+
+  .sidebar h1 {
+    font-size: 1.5rem;
+  }
+
+  .sidebar button {
+    width: 100%;
+  }
+
+  #tweetBox {
+    width: 100%;
+    margin-bottom: 15px;
+  }
+
+  .post-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  ul#channelList li.channel-item {
+    padding: 8px;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Ajustes para telas de celular */
+  body {
+    padding: 10px;
+  }
+
+  .login-page input {
+    width: 100%;
+  }
+
+  .login-page button {
+    width: 100%;
+  }
+
+  .sidebar, .sidebarR {
+    padding: 5px;
+  }
+
+  .main {
+    padding: 5px;
+  }
+
+  .avatar {
+    width: 50px;
+    height: 50px;
+  }
+
+  button {
+    padding: 12px;
+  }
 }

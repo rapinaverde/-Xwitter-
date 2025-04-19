@@ -10,49 +10,46 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
     import {
       getFirestore, doc, setDoc, getDoc,
-      addDoc, collection, query, where, getDocs
+      addDoc, collection, query, where, getDocs, deleteDoc
     } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
- // Import the functions you need from the SDKs you need
-  // https://firebase.google.com/docs/web/setup#available-libraries
-
-  // Your web app's Firebase configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-  const firebaseConfig = {
-  apiKey: "AIzaSyAjRsShUxXtA8-N2WrSmq4SV8I888MGghQ",
-  authDomain: "xwitter-a67bc.firebaseapp.com",
-  projectId: "xwitter-a67bc",
-  storageBucket: "xwitter-a67bc.firebasestorage.app",
-  messagingSenderId: "446604101446",
-  appId: "1:446604101446:web:0c56e9f6b2b9c17f9e0747",
-  measurementId: "G-DZD8ZFMTGS"
-};
-
-// 🔧 Adicione estas duas linhas:
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
+  
+    const firebaseConfig = {
+      apiKey: "AIzaSyAjRsShUxXtA8-N2WrSmq4SV8I888MGghQ",
+      authDomain: "xwitter-a67bc.firebaseapp.com",
+      projectId: "xwitter-a67bc",
+      storageBucket: "xwitter-a67bc.firebasestorage.app",
+      messagingSenderId: "446604101446",
+      appId: "1:446604101446:web:0c56e9f6b2b9c17f9e0747",
+      measurementId: "G-DZD8ZFMTGS"
+    };
+  
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+  
     async function salvarUsuario(username, pic) {
       await setDoc(doc(db, "users", username), { pic });
     }
-
+  
     async function obterUsuario(username) {
       const docRef = doc(db, "users", username);
       const docSnap = await getDoc(docRef);
       return docSnap.exists() ? docSnap.data() : null;
     }
-
+  
     async function salvarTweet(canal, tweet) {
-      await addDoc(collection(db, "tweets"), { canal, ...tweet });
+      return await addDoc(collection(db, "tweets"), { canal, ...tweet });
     }
-
+  
     async function carregarTweets(canal) {
       const q = query(collection(db, "tweets"), where("canal", "==", canal));
       const snapshot = await getDocs(q);
-      return snapshot.docs.map(doc => doc.data());
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     }
-
-    // Exemplo de uso:
+  
+    async function deletarTweet(tweetId) {
+      await deleteDoc(doc(db, "tweets", tweetId));
+    }
+  
     document.addEventListener("DOMContentLoaded", () => {
       const usernameInput = document.getElementById("usernameInput");
       const profilePicInput = document.getElementById("profilePicInput");
@@ -62,39 +59,73 @@ const db = getFirestore(app);
       const feed = document.getElementById("feed");
       const channelTitle = document.getElementById("channelTitle");
       const profilePic = document.getElementById("profilePic");
-
+  
+      // Perfil editável
+      const editNameBtn = document.createElement("button");
+      editNameBtn.textContent = "Editar Nome/Foto";
+      editNameBtn.addEventListener("click", async () => {
+        const novoNome = prompt("Novo nome de usuário:", currentUser);
+        const novaFotoFile = prompt("Cole a URL da nova imagem de perfil:");
+        if (novoNome && novaFotoFile) {
+          await salvarUsuario(novoNome, novaFotoFile);
+          localStorage.setItem("xwitterUser", novoNome);
+          localStorage.setItem("xwitterPic", novaFotoFile);
+          alert("Informações atualizadas! Recarregando...");
+          location.reload();
+        }
+      });
+  
       let currentUser = "";
       let currentPic = "";
       let currentChannel = "geral";
-
+  
+      const savedUser = localStorage.getItem("xwitterUser");
+      const savedPic = localStorage.getItem("xwitterPic");
+  
+      if (savedUser && savedPic) {
+        currentUser = savedUser;
+        currentPic = savedPic;
+        profilePic.src = currentPic;
+  
+        document.getElementById("authPage").style.display = "none";
+        document.getElementById("app").style.display = "flex";
+        document.querySelector(".sidebar").appendChild(editNameBtn);
+        carregarFeed();
+        return;
+      }
+  
       authBtn.addEventListener("click", async () => {
         const username = usernameInput.value.trim();
         const file = profilePicInput.files[0];
         if (!username) return alert("Digite um nome de usuário");
-
+  
         const userData = await obterUsuario(username);
         if (userData) {
           currentUser = username;
           currentPic = userData.pic || "";
           profilePic.src = currentPic;
+          localStorage.setItem("xwitterUser", currentUser);
+          localStorage.setItem("xwitterPic", currentPic);
         } else {
           if (!file) return alert("Escolha uma foto para cadastrar.");
           const reader = new FileReader();
           reader.onload = async (e) => {
             currentPic = e.target.result;
             await salvarUsuario(username, currentPic);
-            profilePic.src = currentPic;
+            localStorage.setItem("xwitterUser", username);
+            localStorage.setItem("xwitterPic", currentPic);
             alert("Usuário cadastrado. Faça login novamente.");
           };
           reader.readAsDataURL(file);
           return;
         }
-
+  
         document.getElementById("authPage").style.display = "none";
         document.getElementById("app").style.display = "flex";
+        document.querySelector(".sidebar").appendChild(editNameBtn);
         carregarFeed();
       });
-
+  
       async function carregarFeed() {
         feed.innerHTML = "";
         channelTitle.textContent = `#${currentChannel}`;
@@ -107,11 +138,25 @@ const db = getFirestore(app);
               <img src="${tweet.pic}" class="avatar-small">
               <strong>${tweet.user}</strong>
             </div>
-            <p>${tweet.text}</p>`;
+            <p>${tweet.text}</p>
+          `;
+          // Botão de deletar se for o dono
+          if (tweet.user === currentUser) {
+            const deleteBtn = document.createElement("button");
+            deleteBtn.textContent = "🗑️";
+            deleteBtn.style.marginTop = "5px";
+            deleteBtn.addEventListener("click", async () => {
+              if (confirm("Deseja apagar este tweet?")) {
+                await deletarTweet(tweet.id);
+                carregarFeed();
+              }
+            });
+            post.appendChild(deleteBtn);
+          }
           feed.appendChild(post);
         });
       }
-
+  
       postarBtn.addEventListener("click", async () => {
         const text = tweetBox.value.trim();
         if (!text) return;
@@ -125,6 +170,7 @@ const db = getFirestore(app);
       });
     });
   </script>
+  
 </head>
 <body>
   <!-- Página de Login/Cadastro -->
@@ -147,23 +193,18 @@ const db = getFirestore(app);
     </div>
 
     <!-- Conteúdo Principal -->
-      <!-- Conteúdo Principal -->
-      <div class="main">
-        <h2 id="channelTitle">#geral</h2>
-        <textarea id="tweetBox" placeholder="O que está acontecendo?"></textarea>
-        <div style="display: flex; gap: 20px; align-items: flex-start;">
-          <button id="postar">Tweetar</button>
-          <!-- Grupos ao lado do botão Tweetar -->
-          <div class="sidebarR">
-            <h3>📢 Grupos</h3>
-            <input type="text" id="newChannelName" placeholder="Nome do grupo">
-            <button id="addChannelBtn">Adicionar Grupo</button>
-            <ul id="channelList"></ul>
-          </div>
+    <div class="main">
+      <h2 id="channelTitle">#geral</h2>
+      <textarea id="tweetBox" placeholder="O que está acontecendo?"></textarea>
+      <div style="display: flex; gap: 20px; align-items: flex-start;">
+        <button id="postar">Tweetar</button>
+        <!-- Grupos ao lado do botão Tweetar -->
+        <div class="sidebarR">
+          <h3>📢 Grupos</h3>
         </div>
-        <div id="feed"></div>
       </div>
+      <div id="feed"></div>
     </div>
-
+  </div>
 </body>
 </html>
