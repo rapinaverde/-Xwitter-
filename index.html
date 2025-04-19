@@ -4,13 +4,314 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Xwitter</title>
-  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f8fa;
+    }
+    .login-page {
+      max-width: 400px;
+      margin: 50px auto;
+      padding: 20px;
+      text-align: center;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .login-page input, .login-page button {
+      display: block;
+      width: 100%;
+      margin: 10px 0;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+    #app {
+      display: flex;
+      min-height: 100vh;
+    }
+    .sidebar {
+      width: 250px;
+      padding: 20px;
+      background-color: #ffffff;
+      border-right: 1px solid #e1e8ed;
+    }
+    .sidebar-right {
+      width: 250px;
+      padding: 20px;
+      background-color: #ffffff;
+      border-left: 1px solid #e1e8ed;
+      height: 100vh;
+      position: sticky;
+      top: 0;
+    }
+    .main {
+      flex-grow: 1;
+      padding: 20px;
+    }
+    .avatar {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .avatar-small {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-right: 10px;
+    }
+    .online-indicator {
+      width: 10px;
+      height: 10px;
+      background-color: #4CAF50;
+      border-radius: 50%;
+      display: inline-block;
+      margin-left: 5px;
+    }
+    .post {
+      background: white;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .post-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .post-timestamp {
+      color: #657786;
+      font-size: 0.8em;
+      margin-left: 10px;
+    }
+    #tweetBox {
+      width: 100%;
+      height: 80px;
+      margin-bottom: 10px;
+      padding: 10px;
+      box-sizing: border-box;
+      border: 1px solid #e1e8ed;
+      border-radius: 5px;
+      resize: none;
+    }
+    button {
+      background-color: #1da1f2;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 50px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0c85d0;
+    }
+    .delete-btn {
+      background-color: #e0245e;
+      padding: 5px 10px;
+      font-size: 12px;
+    }
+    .image-preview {
+      max-width: 100%;
+      max-height: 300px;
+      margin-top: 10px;
+      border-radius: 10px;
+    }
+    .image-upload-container {
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+    }
+    .channel-item {
+      cursor: pointer;
+      padding: 8px;
+      margin: 5px 0;
+      border-radius: 5px;
+    }
+    .channel-item:hover {
+      background-color: #f5f8fa;
+    }
+    .active-channel {
+      background-color: #e8f5fe;
+      font-weight: bold;
+    }
+    .online-users {
+      margin-top: 10px;
+    }
+    .user-online {
+      display: flex;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .user-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .like-btn, .retweet-btn {
+      background: none;
+      border: none;
+      color: #657786;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      font-size: 14px;
+    }
+    .like-btn:hover {
+      color: #e0245e;
+    }
+    .retweet-btn:hover {
+      color: #17bf63;
+    }
+    .like-count, .retweet-count {
+      margin-left: 5px;
+    }
+    .liked {
+      color: #e0245e;
+    }
+    .retweeted {
+      color: #17bf63;
+    }
+    .online-title {
+      border-bottom: 1px solid #e1e8ed;
+      padding-bottom: 10px;
+      margin-bottom: 15px;
+    }
+    .search-box {
+      width: 100%;
+      padding: 10px;
+      border-radius: 20px;
+      border: 1px solid #e1e8ed;
+      margin-bottom: 15px;
+    }
+    
+    /* Botão de menu mobile */
+    .menu-toggle {
+      display: none;
+      background-color: #1da1f2;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 10px;
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 1000;
+      cursor: pointer;
+    }
+    
+    /* CSS Responsivo */
+    @media screen and (max-width: 1024px) {
+      .sidebar-right {
+        width: 200px;
+      }
+      
+      .sidebar {
+        width: 200px;
+      }
+    }
+    
+    @media screen and (max-width: 768px) {
+      #app {
+        flex-direction: column;
+      }
+      
+      .sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid #e1e8ed;
+        order: 1;
+        position: fixed;
+        top: 0;
+        left: -100%;
+        height: 100vh;
+        z-index: 999;
+        transition: left 0.3s ease;
+        overflow-y: auto;
+      }
+      
+      .sidebar.active {
+        left: 0;
+      }
+      
+      .sidebar-right {
+        width: 100%;
+        border-left: none;
+        order: 3;
+        height: auto;
+        position: static;
+      }
+      
+      .main {
+        order: 2;
+        margin-top: 60px; /* Espaço para o botão de menu */
+      }
+      
+      .menu-toggle {
+        display: block;
+      }
+      
+      .login-page {
+        margin: 20px auto;
+        width: 90%;
+      }
+      
+      .user-actions {
+        flex-wrap: wrap;
+      }
+    }
+    
+    @media screen and (max-width: 480px) {
+      .post {
+        padding: 10px;
+      }
+      
+      .post-header {
+        flex-wrap: wrap;
+      }
+      
+      .image-upload-container {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      #clearImageBtn {
+        margin-top: 10px;
+      }
+      
+      .avatar {
+        width: 80px;
+        height: 80px;
+      }
+    }
+    
+    /* Overlay para quando o menu mobile estiver aberto */
+    .overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 998;
+    }
+    
+    .overlay.active {
+      display: block;
+    }
+  </style>
   <!-- Firebase SDKs -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
     import {
       getFirestore, doc, setDoc, getDoc,
-      addDoc, collection, query, where, getDocs, deleteDoc
+      addDoc, collection, query, where, getDocs, deleteDoc,
+      updateDoc, onSnapshot, serverTimestamp, orderBy, limit
     } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
   
     const firebaseConfig = {
@@ -26,22 +327,52 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
   
+    // Funções do banco de dados
     async function salvarUsuario(username, pic) {
-      await setDoc(doc(db, "users", username), { pic });
+      return await setDoc(doc(db, "usuarios", username), { 
+        username, 
+        pic, 
+        online: true,
+        lastSeen: serverTimestamp() 
+      });
     }
-  
+
     async function obterUsuario(username) {
-      const docRef = doc(db, "users", username);
-      const docSnap = await getDoc(docRef);
-      return docSnap.exists() ? docSnap.data() : null;
+      const docRef = await getDoc(doc(db, "usuarios", username));
+      return docRef.exists() ? docRef.data() : null;
     }
-  
+
+    async function atualizarStatusOnline(username, online) {
+      // Verificar se o usuário existe antes de atualizar
+      const userDoc = await getDoc(doc(db, "usuarios", username));
+      if (!userDoc.exists()) {
+        console.log(`Usuário ${username} não existe, criando antes de atualizar status`);
+        await salvarUsuario(username, localStorage.getItem("xwitterPic") || "");
+      }
+      
+      return await updateDoc(doc(db, "usuarios", username), { 
+        online,
+        lastSeen: serverTimestamp()
+      });
+    }
+
     async function salvarTweet(canal, tweet) {
-      return await addDoc(collection(db, "tweets"), { canal, ...tweet });
+      return await addDoc(collection(db, "tweets"), { 
+        canal, 
+        ...tweet, 
+        timestamp: serverTimestamp(),
+        likes: [],
+        retweets: [] 
+      });
     }
   
     async function carregarTweets(canal) {
-      const q = query(collection(db, "tweets"), where("canal", "==", canal));
+      const q = query(
+        collection(db, "tweets"), 
+        where("canal", "==", canal),
+        orderBy("timestamp", "desc"),
+        limit(50)
+      );
       const snapshot = await getDocs(q);
       return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     }
@@ -49,8 +380,69 @@
     async function deletarTweet(tweetId) {
       await deleteDoc(doc(db, "tweets", tweetId));
     }
-  
-    document.addEventListener("DOMContentLoaded", () => {
+
+    async function toggleLike(tweetId, username) {
+      const tweetRef = doc(db, "tweets", tweetId);
+      const tweetSnap = await getDoc(tweetRef);
+      
+      if (!tweetSnap.exists()) {
+        console.error("Tweet não encontrado!");
+        return;
+      }
+      
+      const tweetData = tweetSnap.data();
+      
+      let likes = tweetData.likes || [];
+      if (likes.includes(username)) {
+        likes = likes.filter(user => user !== username);
+      } else {
+        likes.push(username);
+      }
+      
+      await updateDoc(tweetRef, { likes });
+    }
+
+    async function toggleRetweet(tweetId, username) {
+      const tweetRef = doc(db, "tweets", tweetId);
+      const tweetSnap = await getDoc(tweetRef);
+      
+      if (!tweetSnap.exists()) {
+        console.error("Tweet não encontrado!");
+        return;
+      }
+      
+      const tweetData = tweetSnap.data();
+      
+      let retweets = tweetData.retweets || [];
+      if (retweets.includes(username)) {
+        retweets = retweets.filter(user => user !== username);
+      } else {
+        retweets.push(username);
+      }
+      
+      await updateDoc(tweetRef, { retweets });
+    }
+
+    // Canais
+    async function criarCanal(nome) {
+      return await setDoc(doc(db, "canais", nome), { 
+        nome, 
+        criador: currentUser,
+        timestamp: serverTimestamp()
+      });
+    }
+
+    async function carregarCanais() {
+      try {
+        const snapshot = await getDocs(collection(db, "canais"));
+        return snapshot.docs.map(doc => doc.data());
+      } catch (error) {
+        console.error("Erro ao carregar canais:", error);
+        return [{ nome: "geral", criador: "sistema" }];
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", async () => {
       const usernameInput = document.getElementById("usernameInput");
       const profilePicInput = document.getElementById("profilePicInput");
       const authBtn = document.getElementById("authBtn");
@@ -59,114 +451,545 @@
       const feed = document.getElementById("feed");
       const channelTitle = document.getElementById("channelTitle");
       const profilePic = document.getElementById("profilePic");
-  
+      const tweetImageInput = document.getElementById("tweetImageInput");
+      const tweetImgPreview = document.getElementById("tweetImgPreview");
+      const onlineUsersContainer = document.getElementById("onlineUsers");
+      const channelsContainer = document.getElementById("channelsList");
+      const createChannelBtn = document.getElementById("createChannelBtn");
+      const searchInput = document.getElementById("searchUsers");
+      const menuToggle = document.getElementById("menuToggle");
+      const sidebar = document.querySelector(".sidebar");
+      const overlay = document.querySelector(".overlay");
+
+      // Toggle do menu mobile
+      menuToggle.addEventListener("click", () => {
+        sidebar.classList.toggle("active");
+        overlay.classList.toggle("active");
+      });
+
+      overlay.addEventListener("click", () => {
+        sidebar.classList.remove("active");
+        overlay.classList.remove("active");
+      });
+
+      // Variáveis de estado
+      let currentUser = "";
+      let currentPic = "";
+      let currentChannel = "geral";
+      let tweetImageData = null;
+
+      // Acompanhar usuários online
+      let onlineUsersUnsubscribe;
+
+      // Preview de imagem para tweets
+      tweetImageInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (!file) {
+          tweetImgPreview.style.display = "none";
+          tweetImageData = null;
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          tweetImageData = event.target.result;
+          tweetImgPreview.src = tweetImageData;
+          tweetImgPreview.style.display = "block";
+        };
+        reader.readAsDataURL(file);
+      });
+
+      // Botão para resetar a imagem do tweet
+      document.getElementById("clearImageBtn").addEventListener("click", () => {
+        tweetImageInput.value = "";
+        tweetImgPreview.style.display = "none";
+        tweetImageData = null;
+      });
+
+      // Filtrar usuários online
+      searchInput.addEventListener("input", (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        const userElements = onlineUsersContainer.querySelectorAll(".user-online");
+        
+        userElements.forEach(userEl => {
+          const username = userEl.querySelector(".user-name").textContent.toLowerCase();
+          if (username.includes(searchTerm)) {
+            userEl.style.display = "flex";
+          } else {
+            userEl.style.display = "none";
+          }
+        });
+      });
+
       // Perfil editável
       const editNameBtn = document.createElement("button");
       editNameBtn.textContent = "Editar Nome/Foto";
       editNameBtn.addEventListener("click", async () => {
         const novoNome = prompt("Novo nome de usuário:", currentUser);
-        const novaFotoFile = prompt("Cole a URL da nova imagem de perfil:");
-        if (novoNome && novaFotoFile) {
-          await salvarUsuario(novoNome, novaFotoFile);
-          localStorage.setItem("xwitterUser", novoNome);
-          localStorage.setItem("xwitterPic", novaFotoFile);
-          alert("Informações atualizadas! Recarregando...");
-          location.reload();
+        if (!novoNome) return;
+
+        let novaFotoUrl = currentPic;
+        const mudarFoto = confirm("Deseja alterar a foto de perfil?");
+        
+        if (mudarFoto) {
+          const fileInput = document.createElement("input");
+          fileInput.type = "file";
+          fileInput.accept = "image/*";
+          
+          fileInput.click();
+          
+          await new Promise((resolve) => {
+            fileInput.onchange = async (e) => {
+              const file = e.target.files[0];
+              if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                  novaFotoUrl = e.target.result;
+                  resolve();
+                };
+                reader.readAsDataURL(file);
+              } else {
+                resolve();
+              }
+            };
+          });
         }
+
+        // Atualizar status offline para o usuário atual antes de mudar
+        try {
+          await atualizarStatusOnline(currentUser, false);
+        } catch (error) {
+          console.error("Erro ao desativar status do usuário atual:", error);
+        }
+        
+        // Salvar novo usuário
+        await salvarUsuario(novoNome, novaFotoUrl);
+        
+        localStorage.setItem("xwitterUser", novoNome);
+        localStorage.setItem("xwitterPic", novaFotoUrl);
+        
+        alert("Informações atualizadas! Recarregando...");
+        location.reload();
       });
-  
-      let currentUser = "";
-      let currentPic = "";
-      let currentChannel = "geral";
-  
+
+      // Verificar sessão existente ou usuário salvo
+      try {
+        const sessionDoc = await getDoc(doc(db, "session", "current"));
+        if (sessionDoc.exists()) {
+          const sessionData = sessionDoc.data();
+          const userData = await obterUsuario(sessionData.username);
+          if (userData) {
+            currentUser = sessionData.username;
+            currentPic = userData.pic;
+            iniciarApp();
+            return;
+          }
+        }
+      } catch (error) {
+        console.error("Erro ao verificar sessão:", error);
+      }
+
       const savedUser = localStorage.getItem("xwitterUser");
       const savedPic = localStorage.getItem("xwitterPic");
-  
       if (savedUser && savedPic) {
         currentUser = savedUser;
         currentPic = savedPic;
-        profilePic.src = currentPic;
-  
-        document.getElementById("authPage").style.display = "none";
-        document.getElementById("app").style.display = "flex";
-        document.querySelector(".sidebar").appendChild(editNameBtn);
-        carregarFeed();
+        iniciarApp();
         return;
       }
-  
+
+      // Login/Cadastro
       authBtn.addEventListener("click", async () => {
         const username = usernameInput.value.trim();
         const file = profilePicInput.files[0];
         if (!username) return alert("Digite um nome de usuário");
-  
-        const userData = await obterUsuario(username);
-        if (userData) {
-          currentUser = username;
-          currentPic = userData.pic || "";
-          profilePic.src = currentPic;
-          localStorage.setItem("xwitterUser", currentUser);
-          localStorage.setItem("xwitterPic", currentPic);
-        } else {
-          if (!file) return alert("Escolha uma foto para cadastrar.");
-          const reader = new FileReader();
-          reader.onload = async (e) => {
-            currentPic = e.target.result;
-            await salvarUsuario(username, currentPic);
-            localStorage.setItem("xwitterUser", username);
+
+        try {
+          const userData = await obterUsuario(username);
+          if (userData) {
+            currentUser = username;
+            currentPic = userData.pic || "";
+            localStorage.setItem("xwitterUser", currentUser);
             localStorage.setItem("xwitterPic", currentPic);
-            alert("Usuário cadastrado. Faça login novamente.");
-          };
-          reader.readAsDataURL(file);
-          return;
+          } else {
+            if (!file) return alert("Escolha uma foto para cadastrar.");
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+              currentPic = e.target.result;
+              await salvarUsuario(username, currentPic);
+              localStorage.setItem("xwitterUser", username);
+              localStorage.setItem("xwitterPic", currentPic);
+              alert("Usuário cadastrado com sucesso!");
+              await setDoc(doc(db, "session", "current"), { username });
+              iniciarApp();
+            };
+            reader.readAsDataURL(file);
+            return;
+          }
+
+          await setDoc(doc(db, "session", "current"), { username: currentUser });
+          iniciarApp();
+        } catch (error) {
+          console.error("Erro no login:", error);
+          alert("Ocorreu um erro ao tentar fazer login. Tente novamente.");
         }
-  
+      });
+
+      // Iniciar a aplicação principal
+      async function iniciarApp() {
+        profilePic.src = currentPic;
+        document.getElementById("usernameDisplay").textContent = currentUser;
         document.getElementById("authPage").style.display = "none";
         document.getElementById("app").style.display = "flex";
         document.querySelector(".sidebar").appendChild(editNameBtn);
+        
+        try {
+          await atualizarStatusOnline(currentUser, true);
+        } catch (error) {
+          console.error("Erro ao atualizar status online:", error);
+        }
+        
+        // Configurar listener para quando o usuário sair
+        window.addEventListener("beforeunload", async () => {
+          try {
+            await atualizarStatusOnline(currentUser, false);
+          } catch (error) {
+            console.error("Erro ao atualizar status offline:", error);
+          }
+        });
+
+        // Listener para usuários online
+        iniciarMonitoramentoUsuariosOnline();
+        
+        // Carregar canais
+        await carregarListaCanais();
+        
+        // Carregar tweets
         carregarFeed();
+      }
+
+      // Monitorar usuários online
+      function iniciarMonitoramentoUsuariosOnline() {
+        if (onlineUsersUnsubscribe) {
+          onlineUsersUnsubscribe();
+        }
+
+        try {
+          const q = query(
+            collection(db, "usuarios"),
+            where("online", "==", true),
+            orderBy("lastSeen", "desc")
+          );
+
+          onlineUsersUnsubscribe = onSnapshot(q, (snapshot) => {
+            onlineUsersContainer.innerHTML = "";
+            const onlineCount = snapshot.docs.length;
+            document.getElementById("onlineCount").textContent = onlineCount;
+            
+            snapshot.docs.forEach(doc => {
+              const user = doc.data();
+              const userEl = document.createElement("div");
+              userEl.classList.add("user-online");
+              userEl.innerHTML = `
+                <img src="${user.pic}" class="avatar-small" style="width: 25px; height: 25px;">
+                <span class="user-name">${user.username}</span>
+                <span class="online-indicator"></span>
+              `;
+              onlineUsersContainer.appendChild(userEl);
+            });
+          }, (error) => {
+            console.error("Erro ao monitorar usuários online:", error);
+          });
+        } catch (error) {
+          console.error("Erro ao configurar monitoramento de usuários:", error);
+        }
+      }
+
+      // Carregar canais
+      async function carregarListaCanais() {
+        try {
+          const canais = await carregarCanais();
+          channelsContainer.innerHTML = "";
+          
+          // Adicionar canal geral por padrão
+          const geralChannel = document.createElement("div");
+          geralChannel.classList.add("channel-item");
+          geralChannel.textContent = "#geral";
+          if (currentChannel === "geral") {
+            geralChannel.classList.add("active-channel");
+          }
+          geralChannel.addEventListener("click", () => {
+            document.querySelectorAll(".channel-item").forEach(ch => ch.classList.remove("active-channel"));
+            geralChannel.classList.add("active-channel");
+            currentChannel = "geral";
+            carregarFeed();
+            
+            // Fecha o menu no mobile
+            if (window.innerWidth <= 768) {
+              sidebar.classList.remove("active");
+              overlay.classList.remove("active");
+            }
+          });
+          channelsContainer.appendChild(geralChannel);
+          
+          canais.forEach(canal => {
+            if (canal.nome === "geral") return;
+            
+            const channelEl = document.createElement("div");
+            channelEl.classList.add("channel-item");
+            channelEl.textContent = `#${canal.nome}`;
+            if (currentChannel === canal.nome) {
+              channelEl.classList.add("active-channel");
+            }
+            channelEl.addEventListener("click", () => {
+              document.querySelectorAll(".channel-item").forEach(ch => ch.classList.remove("active-channel"));
+              channelEl.classList.add("active-channel");
+              currentChannel = canal.nome;
+              carregarFeed();
+              
+              // Fecha o menu no mobile
+              if (window.innerWidth <= 768) {
+                sidebar.classList.remove("active");
+                overlay.classList.remove("active");
+              }
+            });
+            channelsContainer.appendChild(channelEl);
+          });
+        } catch (error) {
+          console.error("Erro ao carregar canais:", error);
+          alert("Falha ao carregar canais. Tente recarregar a página.");
+        }
+      }
+
+      // Criar canal
+      createChannelBtn.addEventListener("click", async () => {
+        const canalNome = prompt("Nome do novo canal:");
+        if (!canalNome) return;
+        
+        try {
+          await criarCanal(canalNome);
+          await carregarListaCanais();
+          currentChannel = canalNome;
+          carregarFeed();
+        } catch (err) {
+          console.error("Erro ao criar canal:", err);
+          alert("Erro ao criar canal: " + err.message);
+        }
       });
-  
+
+      // Carregar tweets no feed
       async function carregarFeed() {
         feed.innerHTML = "";
         channelTitle.textContent = `#${currentChannel}`;
-        const tweets = await carregarTweets(currentChannel);
-        tweets.forEach(tweet => {
-          const post = document.createElement("div");
-          post.classList.add("post");
-          post.innerHTML = `
-            <div class="post-header">
-              <img src="${tweet.pic}" class="avatar-small">
-              <strong>${tweet.user}</strong>
-            </div>
-            <p>${tweet.text}</p>
-          `;
-          // Botão de deletar se for o dono
-          if (tweet.user === currentUser) {
-            const deleteBtn = document.createElement("button");
-            deleteBtn.textContent = "🗑️";
-            deleteBtn.style.marginTop = "5px";
-            deleteBtn.addEventListener("click", async () => {
-              if (confirm("Deseja apagar este tweet?")) {
-                await deletarTweet(tweet.id);
-                carregarFeed();
+
+        const tweetsContainer = document.createElement("div");
+        tweetsContainer.id = "tweetsContainer";
+        feed.appendChild(tweetsContainer);
+
+        try {
+          const tweets = await carregarTweets(currentChannel);
+
+          if (tweets.length === 0) {
+            const emptyMessage = document.createElement("div");
+            emptyMessage.classList.add("post");
+            emptyMessage.innerHTML = `<p>Nenhum tweet neste canal. Seja o primeiro a postar!</p>`;
+            tweetsContainer.appendChild(emptyMessage);
+            return;
+          }
+
+          tweets.forEach(tweet => {
+            const post = document.createElement("div");
+            post.classList.add("post");
+            post.id = `tweet-${tweet.id}`;
+            
+            const formattedDate = tweet.timestamp ? new Date(tweet.timestamp.seconds * 1000).toLocaleString() : 'Agora';
+            
+            let postContent = `
+              <div class="post-header">
+                <img src="${tweet.pic}" class="avatar-small">
+                <strong>${tweet.user}</strong>
+                <span class="post-timestamp">${formattedDate}</span>
+              </div>
+              <p>${tweet.text}</p>
+            `;
+            
+            if (tweet.imageUrl) {
+              postContent += `<img src="${tweet.imageUrl}" class="image-preview">`;
+            }
+            
+            post.innerHTML = postContent;
+            
+            // Ações do tweet (curtir, retweetar)
+            const actionDiv = document.createElement("div");
+            actionDiv.classList.add("user-actions");
+            
+            const likeBtn = document.createElement("button");
+            likeBtn.classList.add("like-btn");
+            const likeCount = tweet.likes?.length || 0;
+            const userLiked = tweet.likes?.includes(currentUser);
+            
+            likeBtn.innerHTML = `${userLiked ? '❤️' : '🤍'} <span class="like-count">${likeCount}</span>`;
+            if (userLiked) likeBtn.classList.add("liked");
+            
+            likeBtn.addEventListener("click", async () => {
+              try {
+                await toggleLike(tweet.id, currentUser);
+              } catch (error) {
+                console.error("Erro ao curtir tweet:", error);
               }
             });
-            post.appendChild(deleteBtn);
-          }
-          feed.appendChild(post);
-        });
+            
+            const retweetBtn = document.createElement("button");
+            retweetBtn.classList.add("retweet-btn");
+            const retweetCount = tweet.retweets?.length || 0;
+            const userRetweeted = tweet.retweets?.includes(currentUser);
+            
+            retweetBtn.innerHTML = `${userRetweeted ? '🔄' : '🔁'} <span class="retweet-count">${retweetCount}</span>`;
+            if (userRetweeted) retweetBtn.classList.add("retweeted");
+            
+            retweetBtn.addEventListener("click", async () => {
+              try {
+                await toggleRetweet(tweet.id, currentUser);
+              } catch (error) {
+                console.error("Erro ao retweetar:", error);
+              }
+            });
+            
+            actionDiv.appendChild(likeBtn);
+            actionDiv.appendChild(retweetBtn);
+            
+            // Botão de deletar (apenas para o autor)
+            if (tweet.user === currentUser) {
+              const deleteBtn = document.createElement("button");
+              deleteBtn.textContent = "🗑️ Excluir";
+              deleteBtn.classList.add("delete-btn");
+              deleteBtn.addEventListener("click", async () => {
+                if (confirm("Deseja apagar este tweet?")) {
+                  try {
+                    await deletarTweet(tweet.id);
+                    carregarFeed();
+                  } catch (error) {
+                    console.error("Erro ao deletar tweet:", error);
+                    alert("Não foi possível excluir o tweet. Tente novamente.");
+                  }
+                }
+              });
+              actionDiv.appendChild(deleteBtn);
+            }
+            
+            post.appendChild(actionDiv);
+            tweetsContainer.appendChild(post);
+          });
+          
+          // Configurar listener em tempo real para likes e retweets
+          configureRealTimeUpdates(currentChannel);
+        } catch (error) {
+          console.error("Erro ao carregar tweets:", error);
+          const errorMessage = document.createElement("div");
+          errorMessage.classList.add("post");
+          errorMessage.innerHTML = `<p>Erro ao carregar tweets. Tente recarregar a página.</p>`;
+          tweetsContainer.appendChild(errorMessage);
+        }
+      }// Configurar atualizações em tempo real
+      let feedUnsubscribe;
+      
+      function configureRealTimeUpdates(canal) {
+        if (feedUnsubscribe) {
+          feedUnsubscribe();
+        }
+        
+        try {
+          const q = query(
+            collection(db, "tweets"),
+            where("canal", "==", canal)
+          );
+          
+          feedUnsubscribe = onSnapshot(q, (snapshot) => {
+            snapshot.docChanges().forEach((change) => {
+              const tweet = { id: change.doc.id, ...change.doc.data() };
+              const tweetElement = document.getElementById(`tweet-${tweet.id}`);
+              
+              if (change.type === "modified" && tweetElement) {
+                // Atualizar apenas os contadores e estados
+                const likeBtn = tweetElement.querySelector(".like-btn");
+                const retweetBtn = tweetElement.querySelector(".retweet-btn");
+                
+                if (likeBtn) {
+                  const likeCount = tweet.likes?.length || 0;
+                  const userLiked = tweet.likes?.includes(currentUser);
+                  
+                  likeBtn.innerHTML = `${userLiked ? '❤️' : '🤍'} <span class="like-count">${likeCount}</span>`;
+                  if (userLiked) {
+                    likeBtn.classList.add("liked");
+                  } else {
+                    likeBtn.classList.remove("liked");
+                  }
+                }
+                
+                if (retweetBtn) {
+                  const retweetCount = tweet.retweets?.length || 0;
+                  const userRetweeted = tweet.retweets?.includes(currentUser);
+                  
+                  retweetBtn.innerHTML = `${userRetweeted ? '🔄' : '🔁'} <span class="retweet-count">${retweetCount}</span>`;
+                  if (userRetweeted) {
+                    retweetBtn.classList.add("retweeted");
+                  } else {
+                    retweetBtn.classList.remove("retweeted");
+                  }
+                }
+              } else if (change.type === "added" && !tweetElement) {
+                // Se for um novo tweet e não existir na tela, recarregar feed
+                carregarFeed();
+              } else if (change.type === "removed" && tweetElement) {
+                // Remover elemento da tela se for excluído
+                tweetElement.remove();
+              }
+            });
+          }, (error) => {
+            console.error("Erro na atualização em tempo real:", error);
+          });
+        } catch (error) {
+          console.error("Erro ao configurar atualizações em tempo real:", error);
+        }
       }
-  
+
+      // Postar tweet
       postarBtn.addEventListener("click", async () => {
         const text = tweetBox.value.trim();
-        if (!text) return;
-        await salvarTweet(currentChannel, {
-          user: currentUser,
-          pic: currentPic,
-          text
-        });
-        tweetBox.value = "";
-        carregarFeed();
+        if (!text && !tweetImageData) return alert("Adicione texto ou uma imagem para postar!");
+
+        try {
+          await salvarTweet(currentChannel, {
+            user: currentUser,
+            pic: currentPic,
+            text,
+            imageUrl: tweetImageData
+          });
+          
+          tweetBox.value = "";
+          tweetImageInput.value = "";
+          tweetImgPreview.style.display = "none";
+          tweetImageData = null;
+        } catch (err) {
+          console.error("Erro ao postar tweet:", err);
+          alert("Erro ao postar tweet: " + err.message);
+        }
+      });
+
+      // Logout
+      document.getElementById("logoutBtn").addEventListener("click", async () => {
+        try {
+          await atualizarStatusOnline(currentUser, false);
+          localStorage.removeItem("xwitterUser");
+          localStorage.removeItem("xwitterPic");
+          location.reload();
+        } catch (error) {
+          console.error("Erro ao fazer logout:", error);
+          alert("Ocorreu um erro ao fazer logout, mas você será desconectado mesmo assim.");
+          localStorage.removeItem("xwitterUser");
+          localStorage.removeItem("xwitterPic");
+          location.reload();
+        }
       });
     });
   </script>
@@ -181,29 +1004,48 @@
     <button id="authBtn">Entrar</button>
   </div>
 
+  <!-- Botão de Menu Mobile -->
+  <button id="menuToggle" class="menu-toggle">☰ Menu</button>
+  
+  <!-- Overlay para Menu Mobile -->
+  <div class="overlay"></div>
+
   <!-- Página Principal -->
   <div id="app" style="display:none;">
     <!-- Sidebar Esquerda -->
     <div class="sidebar">
       <h1>Xwitter</h1>
-      <button id="tweetBtn">Tweet</button>
-      <hr>
       <h3>👤 Perfil</h3>
       <img id="profilePic" src="" alt="Perfil" class="avatar">
+      <p id="usernameDisplay"></p>
+      <button id="logoutBtn">Sair</button>
+      <hr>
+      <h3>📢 Canais</h3>
+      <div id="channelsList"></div>
+      <button id="createChannelBtn">Criar Canal</button>
     </div>
 
     <!-- Conteúdo Principal -->
     <div class="main">
       <h2 id="channelTitle">#geral</h2>
       <textarea id="tweetBox" placeholder="O que está acontecendo?"></textarea>
-      <div style="display: flex; gap: 20px; align-items: flex-start;">
-        <button id="postar">Tweetar</button>
-        <!-- Grupos ao lado do botão Tweetar -->
-        <div class="sidebarR">
-          <h3>📢 Grupos</h3>
-        </div>
+      
+      <div class="image-upload-container">
+        <input type="file" id="tweetImageInput" accept="image/*">
+        <button id="clearImageBtn">Limpar imagem</button>
       </div>
+      <img id="tweetImgPreview" class="image-preview" style="display:none;">
+      
+      <button id="postar">Tweetar</button>
+      
       <div id="feed"></div>
+    </div>
+    
+    <!-- Sidebar Direita para Usuários Online -->
+    <div class="sidebar-right">
+      <h3 class="online-title">👥 Online agora (<span id="onlineCount">0</span>)</h3>
+      <input type="text" id="searchUsers" placeholder="Buscar usuários..." class="search-box">
+      <div id="onlineUsers" class="online-users"></div>
     </div>
   </div>
 </body>
