@@ -5,6 +5,126 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Xwitter</title>
   <link rel="stylesheet" href="style.css">
+  <!-- Firebase SDKs -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+    import {
+      getFirestore, doc, setDoc, getDoc,
+      addDoc, collection, query, where, getDocs
+    } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+ // Import the functions you need from the SDKs you need
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+  apiKey: "AIzaSyAjRsShUxXtA8-N2WrSmq4SV8I888MGghQ",
+  authDomain: "xwitter-a67bc.firebaseapp.com",
+  projectId: "xwitter-a67bc",
+  storageBucket: "xwitter-a67bc.firebasestorage.app",
+  messagingSenderId: "446604101446",
+  appId: "1:446604101446:web:0c56e9f6b2b9c17f9e0747",
+  measurementId: "G-DZD8ZFMTGS"
+};
+
+// 🔧 Adicione estas duas linhas:
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+    async function salvarUsuario(username, pic) {
+      await setDoc(doc(db, "users", username), { pic });
+    }
+
+    async function obterUsuario(username) {
+      const docRef = doc(db, "users", username);
+      const docSnap = await getDoc(docRef);
+      return docSnap.exists() ? docSnap.data() : null;
+    }
+
+    async function salvarTweet(canal, tweet) {
+      await addDoc(collection(db, "tweets"), { canal, ...tweet });
+    }
+
+    async function carregarTweets(canal) {
+      const q = query(collection(db, "tweets"), where("canal", "==", canal));
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => doc.data());
+    }
+
+    // Exemplo de uso:
+    document.addEventListener("DOMContentLoaded", () => {
+      const usernameInput = document.getElementById("usernameInput");
+      const profilePicInput = document.getElementById("profilePicInput");
+      const authBtn = document.getElementById("authBtn");
+      const tweetBox = document.getElementById("tweetBox");
+      const postarBtn = document.getElementById("postar");
+      const feed = document.getElementById("feed");
+      const channelTitle = document.getElementById("channelTitle");
+      const profilePic = document.getElementById("profilePic");
+
+      let currentUser = "";
+      let currentPic = "";
+      let currentChannel = "geral";
+
+      authBtn.addEventListener("click", async () => {
+        const username = usernameInput.value.trim();
+        const file = profilePicInput.files[0];
+        if (!username) return alert("Digite um nome de usuário");
+
+        const userData = await obterUsuario(username);
+        if (userData) {
+          currentUser = username;
+          currentPic = userData.pic || "";
+          profilePic.src = currentPic;
+        } else {
+          if (!file) return alert("Escolha uma foto para cadastrar.");
+          const reader = new FileReader();
+          reader.onload = async (e) => {
+            currentPic = e.target.result;
+            await salvarUsuario(username, currentPic);
+            profilePic.src = currentPic;
+            alert("Usuário cadastrado. Faça login novamente.");
+          };
+          reader.readAsDataURL(file);
+          return;
+        }
+
+        document.getElementById("authPage").style.display = "none";
+        document.getElementById("app").style.display = "flex";
+        carregarFeed();
+      });
+
+      async function carregarFeed() {
+        feed.innerHTML = "";
+        channelTitle.textContent = `#${currentChannel}`;
+        const tweets = await carregarTweets(currentChannel);
+        tweets.forEach(tweet => {
+          const post = document.createElement("div");
+          post.classList.add("post");
+          post.innerHTML = `
+            <div class="post-header">
+              <img src="${tweet.pic}" class="avatar-small">
+              <strong>${tweet.user}</strong>
+            </div>
+            <p>${tweet.text}</p>`;
+          feed.appendChild(post);
+        });
+      }
+
+      postarBtn.addEventListener("click", async () => {
+        const text = tweetBox.value.trim();
+        if (!text) return;
+        await salvarTweet(currentChannel, {
+          user: currentUser,
+          pic: currentPic,
+          text
+        });
+        tweetBox.value = "";
+        carregarFeed();
+      });
+    });
+  </script>
 </head>
 <body>
   <!-- Página de Login/Cadastro -->
@@ -13,7 +133,6 @@
     <input type="text" id="usernameInput" placeholder="Nome de usuário">
     <input type="file" id="profilePicInput" accept="image/*">
     <button id="authBtn">Entrar</button>
-    <button id="switchToSignupBtn">Cadastrar-se</button>
   </div>
 
   <!-- Página Principal -->
@@ -25,360 +144,26 @@
       <hr>
       <h3>👤 Perfil</h3>
       <img id="profilePic" src="" alt="Perfil" class="avatar">
-      <input type="file" id="profilePicUpdate" accept="image/*">
-      <input type="text" id="customName" placeholder="Seu nome">
-      <button id="saveProfile">Salvar</button>
-      <button id="logoutBtn">Sair</button> <!-- Botão de logout -->
     </div>
 
     <!-- Conteúdo Principal -->
-    <div class="main">
-      <h2 id="channelTitle">#geral</h2>
-      <textarea id="tweetBox" placeholder="O que está acontecendo?"></textarea>
-      <div style="display: flex; gap: 20px; align-items: flex-start;">
-        <button id="postar">Tweetar</button>
-        <!-- Grupos ao lado do botão Tweetar -->
-        <div class="sidebarR">
-          <h3>📢 Grupos</h3>
-          <input type="text" id="newChannelName" placeholder="Nome do grupo">
-          <button id="addChannelBtn">Adicionar Grupo</button>
-          <ul id="channelList"></ul>
+      <!-- Conteúdo Principal -->
+      <div class="main">
+        <h2 id="channelTitle">#geral</h2>
+        <textarea id="tweetBox" placeholder="O que está acontecendo?"></textarea>
+        <div style="display: flex; gap: 20px; align-items: flex-start;">
+          <button id="postar">Tweetar</button>
+          <!-- Grupos ao lado do botão Tweetar -->
+          <div class="sidebarR">
+            <h3>📢 Grupos</h3>
+            <input type="text" id="newChannelName" placeholder="Nome do grupo">
+            <button id="addChannelBtn">Adicionar Grupo</button>
+            <ul id="channelList"></ul>
+          </div>
         </div>
+        <div id="feed"></div>
       </div>
-      <div id="feed"></div>
     </div>
-  </div>
 
-  <!-- Script JS -->
-  <script>
-    const authPage = document.getElementById("authPage");
-    const app = document.getElementById("app");
-    const loginBtn = document.getElementById("authBtn");
-    const usernameInput = document.getElementById("usernameInput");
-    const profilePicInput = document.getElementById("profilePicInput");
-    const profilePic = document.getElementById("profilePic");
-    const profilePicUpdate = document.getElementById("profilePicUpdate");
-    const customName = document.getElementById("customName");
-    const saveProfile = document.getElementById("saveProfile");
-    const tweetBox = document.getElementById("tweetBox");
-    const postarBtn = document.getElementById("postar");
-    const feed = document.getElementById("feed");
-    const channelList = document.getElementById("channelList");
-    const newChannelName = document.getElementById("newChannelName");
-    const addChannelBtn = document.getElementById("addChannelBtn");
-    const channelTitle = document.getElementById("channelTitle");
-    const switchToSignupBtn = document.getElementById("switchToSignupBtn");
-    const logoutBtn = document.getElementById("logoutBtn"); // Botão de logout
-
-    let currentUser = "";
-    let currentPic = "";
-    let currentChannel = "geral";
-    const tweetsByChannel = JSON.parse(localStorage.getItem("tweetsByChannel")) || { geral: [] };
-    const savedChannels = JSON.parse(localStorage.getItem("channels")) || ["geral"];
-
-    // Função para renderizar os posts do feed
-    function renderFeed() {
-      feed.innerHTML = "";
-      channelTitle.textContent = `#${currentChannel}`;
-      (tweetsByChannel[currentChannel] || []).forEach(post => feed.appendChild(post));
-    }
-
-    // Função para salvar e exibir informações do usuário ao fazer login
-    loginBtn.addEventListener("click", () => {
-      const username = usernameInput.value.trim();
-      const file = profilePicInput.files[0];
-      if (username) {
-        if (localStorage.getItem(username)) { // Verifica se o usuário já existe
-          currentUser = username;
-          localStorage.setItem("twiscord_user", username);
-          customName.value = username;
-          if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-              currentPic = e.target.result;
-              localStorage.setItem("twiscord_pic", currentPic);
-              profilePic.src = currentPic;
-            };
-            reader.readAsDataURL(file);
-          }
-          app.style.display = "flex";
-          authPage.style.display = "none";
-        } else {
-          alert("Usuário não encontrado. Tente cadastrar-se.");
-        }
-      }
-    });
-
-    // Função para o Cadastro de novos usuários
-    switchToSignupBtn.addEventListener("click", () => {
-      authPage.innerHTML = `
-        <h2>Cadastrar no Xwitter</h2>
-        <input type="text" id="newUsername" placeholder="Nome de usuário">
-        <input type="file" id="newProfilePic" accept="image/*">
-        <button id="signupBtn">Cadastrar</button>
-        <button id="switchToLoginBtn">Já tenho uma conta</button>
-      `;
-      const signupBtn = document.getElementById("signupBtn");
-      const newUsernameInput = document.getElementById("newUsername");
-      const newProfilePicInput = document.getElementById("newProfilePic");
-
-      signupBtn.addEventListener("click", () => {
-        const newUsername = newUsernameInput.value.trim();
-        const newFile = newProfilePicInput.files[0];
-        if (newUsername && !localStorage.getItem(newUsername)) {  // Verifica se o usuário já não existe
-          let newUserPic = "";
-          if (newFile) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-              newUserPic = e.target.result;
-              localStorage.setItem(newUsername, JSON.stringify({ pic: newUserPic, posts: [] }));
-            };
-            reader.readAsDataURL(newFile);
-          } else {
-            localStorage.setItem(newUsername, JSON.stringify({ pic: "", posts: [] }));
-          }
-          alert("Cadastro realizado com sucesso! Agora, faça login.");
-          location.reload();  // Recarrega a página para mostrar o botão de login
-        } else {
-          alert("Nome de usuário inválido ou já existe!");
-        }
-      });
-
-      const switchToLoginBtn = document.getElementById("switchToLoginBtn");
-      switchToLoginBtn.addEventListener("click", () => location.reload());
-    });
-
-    // Função para salvar o nome personalizado no perfil
-    saveProfile.addEventListener("click", () => {
-      const newName = customName.value.trim();
-      if (newName) {
-        currentUser = newName;
-        localStorage.setItem("twiscord_user", newName);
-        alert("Nome atualizado para " + newName);
-      }
-    });
-
-    // Atualizar foto de perfil
-    profilePicUpdate.addEventListener("change", () => {
-      const file = profilePicUpdate.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          currentPic = e.target.result;
-          localStorage.setItem("twiscord_pic", currentPic);
-          profilePic.src = currentPic;
-        };
-        reader.readAsDataURL(file);
-      }
-    });
-
-    // Postar um tweet no feed
-    postarBtn.addEventListener("click", () => {
-      const text = tweetBox.value;
-      const user = localStorage.getItem("twiscord_user") || "Fulaninho";
-      const pic = localStorage.getItem("twiscord_pic") || "";
-      if (text.trim() === "") return;
-
-      const post = document.createElement("div");
-      post.classList.add("post");
-      post.innerHTML = `
-        <div class="post-header">
-          <img src="${pic}" class="avatar-small">
-          <strong>${user}</strong>
-        </div>
-        <p>${text}</p>`;
-
-      // Adiciona o post ao canal ativo
-      if (!tweetsByChannel[currentChannel]) tweetsByChannel[currentChannel] = [];
-      tweetsByChannel[currentChannel].unshift(post);
-
-      // Salva os posts no localStorage
-      localStorage.setItem("tweetsByChannel", JSON.stringify(tweetsByChannel));
-
-      renderFeed();
-      tweetBox.value = "";
-    });
-
-    // Função para carregar dados salvos (nome de usuário e foto de perfil) ao iniciar
-    window.onload = () => {
-      const savedUser = localStorage.getItem("twiscord_user");
-      const savedPic = localStorage.getItem("twiscord_pic");
-      if (savedUser) {
-        currentUser = savedUser;
-        currentPic = savedPic || "";
-        app.style.display = "flex";
-        authPage.style.display = "none";
-        customName.value = savedUser;
-        if (savedPic) profilePic.src = savedPic;
-      }
-
-      // Carregar canais salvos
-      savedChannels.forEach(channel => {
-        const li = document.createElement("li");
-        li.textContent = "# " + channel;
-        li.classList.add("channel-item");
-        li.addEventListener("click", () => {
-          currentChannel = channel;
-          renderFeed();
-        });
-        channelList.appendChild(li);
-      });
-
-      renderFeed();
-    };
-
-    // Adicionar um novo canal de grupo
-    addChannelBtn.addEventListener("click", () => {
-      const name = newChannelName.value.trim();
-      if (name && !savedChannels.includes(name)) {
-        savedChannels.push(name);
-        localStorage.setItem("channels", JSON.stringify(savedChannels));
-
-        // Cria a lista de canais
-        const li = document.createElement("li");
-        li.textContent = "# " + name;
-        li.classList.add("channel-item");
-        li.addEventListener("click", () => {
-          currentChannel = name;
-          renderFeed();
-        });
-        channelList.appendChild(li);
-
-        newChannelName.value = "";
-      }
-    });
-
-    // Função de Logout
-    logoutBtn.addEventListener("click", () => {
-      localStorage.removeItem("twiscord_user");
-      localStorage.removeItem("twiscord_pic");
-      localStorage.removeItem("tweetsByChannel");
-      localStorage.removeItem("channels");
-      location.reload(); // Recarrega a página e volta para a tela de login
-    });
-  </script>
-
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background-color: #0d1117;
-      color: white;
-    }
-    .login-page {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      background: #161b22;
-    }
-    .login-page input, .login-page button {
-      padding: 10px;
-      margin: 10px;
-      border-radius: 5px;
-      border: none;
-    }
-    .login-page input {
-      width: 200px;
-    }
-    .login-page button {
-      background: #1d9bf0;
-      color: white;
-      cursor: pointer;
-    }
-    #app {
-      display: flex;
-      width: 100%;
-    }
-    .sidebar {
-      width: 240px;
-      padding: 20px;
-      background-color: #161b22;
-      height: 100vh;
-      overflow-y: auto;
-    }
-
-    .sidebarR {
-      position: fixed;
-      top: 0;
-      right: 0;
-      width: 240px;
-      padding: 20px;
-      background-color: #161b22;
-      height: 100vh;
-      overflow-y: auto;
-    }
-    .main {
-      flex-grow: 1;
-      padding: 20px;
-    }
-    textarea {
-      width: 80%;
-      height: 60px;
-      resize: none;
-      margin-bottom: 10px;
-      background: #0d1117;
-      color: white;
-      border: 1px solid #30363d;
-      border-radius: 5px;
-      padding: 10px;
-    }
-    button {
-      padding: 10px 20px;
-      background-color: #1d9bf0;
-      border: none;
-      color: white;
-      cursor: pointer;
-      border-radius: 5px;
-      margin-bottom: 10px;
-    }
-    .post {
-      background: #161b22;
-      padding: 10px;
-      margin-bottom: 10px;
-      border-radius: 8px;
-    }
-    .post-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 5px;
-    }
-    .avatar {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      object-fit: cover;
-    }
-    .avatar-small {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      object-fit: cover;
-    }
-    input[type="text"], input[type="file"] {
-      width: 100%;
-      margin-top: 10px;
-      padding: 8px;
-      border-radius: 5px;
-      border: none;
-    }
-    ul#channelList {
-      padding: 0;
-    }
-    ul#channelList li.channel-item {
-      list-style: none;
-      margin: 5px 0;
-      cursor: pointer;
-      padding: 5px;
-      border-radius: 5px;
-      transition: background 0.2s;
-    }
-    ul#channelList li.channel-item:hover {
-      background-color: #1d2630;
-    }
-  </style>
 </body>
 </html>
